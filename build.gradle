@@ -24,7 +24,7 @@ if (project.parent == null) project(':irisCore') {
     ext.set('mod_id', 'iris')
     ext.set('mod_name', 'IrisCore')
     ext.set('mod_license', 'Custom - attribution required')
-    ext.set('mod_version', '1.0.1')
+    ext.set('mod_version', '1.0.0')
     ext.set('mod_group_id', 'net.opal.iris')
 }
 if (project.parent == null) evaluationDependsOn(':irisCore')
