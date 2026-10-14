@@ -1,0 +1,14 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = 'IrisVision'
+include(':irisCore')
+def irisCoreDirectory = file('../IrisCore').exists() ? file('../IrisCore') : file('../irisV')
+project(':irisCore').projectDir = irisCoreDirectory

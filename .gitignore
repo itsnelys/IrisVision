@@ -1,0 +1,15 @@
+# IDE files
+out/
+*.ipr
+*.iws
+*.iml
+.idea/
+
+# Gradle output
+build/
+.gradle/
+
+# Local game data
+run/
+runs/
+run-data/

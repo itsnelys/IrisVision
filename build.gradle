@@ -1,0 +1,92 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.140'
+}
+
+version = mod_version
+group = mod_group_id
+
+repositories { mavenCentral() }
+base { archivesName = mod_id }
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+def irisCoreProject = project.parent == null ? project(':irisCore') : rootProject
+
+// Subprojects inherit the root properties in Gradle. Give IrisCore its own
+// immutable mod identity before its build script is evaluated.
+if (project.parent == null) project(':irisCore') {
+    ext.set('parchment_minecraft_version', '1.21.1')
+    ext.set('parchment_mappings_version', '2024.11.17')
+    ext.set('minecraft_version', '1.21.1')
+    ext.set('minecraft_version_range', '[1.21.1]')
+    ext.set('neo_version', '21.1.248')
+    ext.set('loader_version_range', '[1,)')
+    ext.set('mod_id', 'iris')
+    ext.set('mod_name', 'IrisCore')
+    ext.set('mod_license', 'Custom - attribution required')
+    ext.set('mod_version', '1.0.1')
+    ext.set('mod_group_id', 'net.opal.iris')
+}
+if (project.parent == null) evaluationDependsOn(':irisCore')
+
+neoForge {
+    version = project.neo_version
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+    mods {
+        "${mod_id}" { sourceSet(sourceSets.main) }
+        iris { sourceSet(irisCoreProject.sourceSets.main) }
+    }
+    unitTest {
+        enable()
+        testedMod = mods.getByName(project.mod_id)
+    }
+    runs {
+        client { client() }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+        configureEach {
+            // Reuse the existing development profile, including saves and options.
+            gameDirectory = file('../IrisCore/run')
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+}
+
+dependencies {
+    implementation irisCoreProject
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+tasks.matching { it.name.startsWith('run') }.configureEach {
+    dependsOn(irisCoreProject.tasks.named('classes'))
+}
+
+tasks.register('runIrisVisionClient') {
+    group = 'mod development'
+    description = 'Runs Minecraft with both IrisCore and IrisVision loaded.'
+    dependsOn(tasks.named('runClient'))
+}
+if (project.parent == null) project(':irisCore').tasks.matching { it.name.startsWith('run') }.configureEach { enabled = false }
+
+def modProperties = [
+        minecraft_version_range: minecraft_version_range,
+        neo_version            : neo_version,
+        loader_version_range   : loader_version_range,
+        mod_id                 : mod_id,
+        mod_name               : mod_name,
+        mod_license            : mod_license,
+        mod_version            : mod_version,
+]
+tasks.named('processResources', ProcessResources).configure {
+    inputs.properties(modProperties)
+    filesMatching('META-INF/neoforge.mods.toml') { expand(modProperties) }
+}
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+tasks.named('test', Test).configure { useJUnitPlatform() }
